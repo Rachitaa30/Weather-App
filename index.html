@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🌤️ Weather App</h1>
+        
+        <div class="search">
+            <input type="text" id="city" placeholder="Enter city">
+            <button onclick="getWeather()">Search</button>
+            <button onclick="getLocation()">📍 My Location</button>
+        </div>
+        
+        <div id="weather" class="weather-card" style="display: none;">
+            <h2 id="cityName"></h2>
+            <div class="temp" id="temp"></div>
+            <div class="desc" id="desc"></div>
+            <div class="details">
+                <div>💧 Humidity: <span id="humidity"></span>%</div>
+                <div>💨 Wind: <span id="wind"></span> km/h</div>
+            </div>
+        </div>
+        
+        <div id="error" style="color: red; display: none;"></div>
+    </div>
+
+    <script>
+        const API_KEY = 'YOUR_API_KEY_HERE'; // REPLACE THIS!
+        
+        async function getWeather(city = document.getElementById('city').value) {
+            if (!city) {
+                alert('Please enter a city');
+                return;
+            }
+            
+            try {
+                const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}`);
+                const data = await res.json();
+                
+                if (data.cod === 200) {
+                    document.getElementById('cityName').textContent = `${data.name}, ${data.sys.country}`;
+                    document.getElementById('temp').textContent = `${Math.round(data.main.temp)}°C`;
+                    document.getElementById('desc').textContent = data.weather[0].description;
+                    document.getElementById('humidity').textContent = data.main.humidity;
+                    document.getElementById('wind').textContent = (data.wind.speed * 3.6).toFixed(1);
+                    document.getElementById('weather').style.display = 'block';
+                    document.getElementById('error').style.display = 'none';
+                } else {
+                    throw new Error('City not found');
+                }
+            } catch (err) {
+                document.getElementById('error').textContent = 'City not found!';
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('weather').style.display = 'none';
+            }
+        }
+        
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async position => {
+                    const { latitude, longitude } = position.coords;
+                    const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=${API_KEY}`);
+                    const data = await res.json();
+                    document.getElementById('city').value = data.name;
+                    getWeather(data.name);
+                });
+            }
+        }
+        
+        // Load default city
+        window.onload = () => {
+            document.getElementById('city').value = 'London';
+            getWeather('London');
+        };
+    </script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        h1 { text-align: center; margin-bottom: 30px; }
+        .search { display: flex; gap: 10px; margin-bottom: 30px; }
+        input {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+        button {
+            padding: 15px 25px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover { background: #ff5252; }
+        .weather-card {
+            background: rgba(255,255,255,0.2);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        .temp { font-size: 48px; font-weight: bold; margin: 20px 0; }
+        .desc { font-size: 24px; margin-bottom: 20px; text-transform: capitalize; }
+        .details { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .details div { padding: 15px; background: rgba(255,255,255,0.1); border-radius: 10px; }
+    </style>
+</body>
+</html>
